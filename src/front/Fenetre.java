@@ -9,7 +9,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.Ellipse2D;
 import java.awt.event.ActionEvent;
 
 import javax.swing.JFrame;
@@ -32,37 +31,20 @@ public class Fenetre extends JFrame {
      */
     private final int height = 600;
 
-    /**
-     * largeur du chariot
-     */
-    private final double chariotWidth = 50.0d;
-
-    /** 
-     * hauteur du chariot 
-     */
-    private final double chariotHeight = 15.0d;
-
-    /**
-     * cordoonées x chariot
-     */
-    private volatile double chariotX;
-
-    /**
-     * cordoonées y chariot
-     */
-    private double chariotY;
-
-
+    
     /**
      * constructeur
      */
     public Fenetre() {
+        // fenetre
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
         setSize(width, height);
         setLayout(null);
         setBounds(0,0, 600, 600);
+
+        // espace de jeu
         Container c = getContentPane();
         Chariot chariot = new Chariot();
         c.add(chariot);
@@ -75,189 +57,271 @@ public class Fenetre extends JFrame {
      */
     public class Chariot extends JPanel implements MouseMotionListener{
 
+        /**
+         * timer pour pouvoir retracer les éléments
+         */
         protected Timer timer;
-        private int delay;
-        protected long start;
+
+        /**
+         * la rapidité du timer
+         */
+        private final int delay = 10;
+        
+        /**
+         * variable pour la gestion du chariot
+         */
         private boolean initial = true;
+
+        /**
+         * abscisse de la balle 
+         */
         protected double x = 0.0d;
+
+        /**
+         * ordonnée de la balle
+         */
         protected double y = 0.0d;
+
+        /**
+         * variable qui reprend debutX de la classe Trigo
+         */
         private double debutX = 0.0d;
-        private double debutY = 0.0d;
-        private int paddingRight = 20;
-        private int paddingLeft = 10;
-        private double initialAngle = Math.toRadians(80); 
-        private double hypo;
-        private double coefDirecteur;
-        private double b;
+
+        /**
+         * variable pour afficher la direction en console uniquement à chaque changement
+         */
+        private int test;
+
+        /**
+         * marge en haut de la fenêtre
+         */
+        private final int paddingTop = 10;
+
+        /**
+         * marge en bas de la fenêtre
+         */
+        private final int paddingBottom = 100;
+
+        /**
+         * marge droite
+         */
+        private final int paddingRight = 20;
+
+        /**
+         * marge gauche
+         */
+        private final int paddingLeft = 25;
+
+        /**
+         * largeur du chariot
+         */
+        private final double chariotWidth = 50.0d;
+
+        /** 
+         * hauteur du chariot 
+         */
+        private final double chariotHeight = 15.0d;
+
+        /**
+         * cordoonées x chariot
+         */
+        private volatile double chariotX;
+
+        /**
+         * cordoonées y chariot
+         */
+        private double chariotY;
+            
+        /**
+         * classe de calcul des variables des fonctions affines
+         */
         Trigo trigo;
+
+        /**
+         * récupérer la direction de la balle
+         */
         Direction direction;
+
 
         /**
          * constructeur
          */
         public Chariot() {
-            delay = 30;
+            // coordonnées du chariot
             chariotX = width/2.0d - chariotWidth/2.0d - 10;
-            chariotY  = height - 80;
-            direction = Direction.SW;
+            chariotY  = height - 95;
+
+            // instanciation d'une direction pour pas d'erreur
+            direction = Direction.SW; 
+
+            // gestion de la fenêtre
             setLayout(null);
             setBounds(0, 0, width-20, height-20);
+
+            // gestion chariot quand la souris est cliquée
             addMouseMotionListener(this);
-            trigo = new Trigo(width-20, height-20);
-            trigo.fromTopToRight();
-            // gestionTimer();
-            while(true) {
-                gestionDirections();
-            }
+
+            // gestion de la balle
+            trigo = new Trigo(width, height, paddingBottom);
+            trigo.fromZeroToLeft(trigo.rand(0+10.0d, width - 10.0d));
+            gestionTimer();
+            
         }
 
-        protected boolean gestionDirections () {
-            if (timer == null) return false;
-            if (timer.isRunning()) return false;
+        /**
+         * gestion de la direction de la balle en fonction d'ou elle vient 
+         * gestion des rebonds sur les côtés
+         * 
+         * la fonction change la direction de la balle, arrête le jeu si la balle n'est pas renvoyée par le chariot
+         */
+        protected void gestionDirections () {
+            // pour affichage console
+            if (test == 0) {
+                System.out.println(trigo.getRebond() + "  " + trigo.getDirection() + " " + x + "  " + y);
+                test++;
+            }
+
+            // si il y a un rebond sur les côtés ou non
             switch (trigo.getRebond()) {
                 case Y:
-                    switch(direction) {
-                        case NE:
-                            trigo.fromMiddleToLeft(y, true);
-                            break;
-                        case NW:
-                            trigo.fromMiddleToRight(y, true);
-                            break;
-                        case SE:
-                            trigo.fromMiddleToLeft(y, false);
-                            break;
-                        case SW:
+                    if (trigo.getDirection() == Direction.NW) {
+                        if ((int) x <= paddingRight) {
                             trigo.fromMiddleToRight(y, false);
-                            break;
-                        case EN:
-                            trigo.fromTopToRight();
-                            break;
-                        case ES:
-                            trigo.fromTopToRight();
-                            break;
-                        case WN:
-                            trigo.fromTopToRight();
-                            break;
-                        case WS:
-                            trigo.fromTopToRight();
-                            break;
+                            x = paddingRight;
+                            test = 0;
+                        } 
+                    }
+                    else if (trigo.getDirection() == Direction.NE) {
+                        if ((int) x >= width - paddingLeft) {
+                            trigo.fromMiddleToLeft(y, true);
+                            x = width - paddingLeft;
+                            test = 0;
                         }
-                        x = 0;
-                        y = 0;
+                    }
+                    else if (trigo.getDirection() == Direction.SW) {
+                        if ((int) x <= paddingRight) {
+                            trigo.fromMiddleToRight(y, true);
+                            x = paddingRight;
+                            test = 0;
+                        } 
+                    }
+                    else if (trigo.getDirection() == Direction.SE) {
+                        if ((int) x >= width - paddingLeft) {
+                            trigo.fromMiddleToLeft(y, false);
+                            x = width - paddingLeft;
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.WN) {
+                        if ((int) x >= width - paddingLeft) {
+                            trigo.fromMiddleToRight(y, true);
+                            x = width - paddingLeft;
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.EN) {
+                        if ((int) x <= paddingRight) {
+                            trigo.fromMiddleToRight(y, true);
+                            x = paddingRight;
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.WS) {
+                        if ((int) x >= width - paddingLeft) {
+                            trigo.fromMiddleToLeft(y, true);
+                            x = width - paddingLeft;
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.ES) {
+                        if ((int) x <= paddingRight) {
+                            trigo.fromMiddleToRight(y, false);
+                            x = paddingRight;
+                            test = 0;
+                        }
+                    }
                     break;
                 case N:
-                    switch(direction) {
-                        case NE:
-                            trigo.fromTopToRight();
-                            break;
-                        case NW:
-                            trigo.fromTopToLeft();
-                            break;
-                        case SE:
-                            trigo.fromZeroToRight();
-                            break;
-                        case SW:
-                            trigo.fromZeroToLeft();
-                            break;
-                        case EN:
-                            break;
-                        case ES:
-                            break;
-                        case WN:
-                            break;
-                        case WS:
-                            break;
+                    if (trigo.getDirection() == Direction.NW) {
+                        if ((int) y >= height - paddingBottom) {
+                            checkChariotPos();
+                            trigo.fromTopToLeft(x);
+                            test = 0;
+                        } 
                     }
-                    x = 0;
-                    y = 0;
+                    else if (trigo.getDirection() == Direction.NE) {
+                        if ((int) y >= height - paddingBottom) {
+                            checkChariotPos();
+                            trigo.fromTopToRight(x);
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.SW) {
+                        if ((int) y <= paddingTop) {
+                            trigo.fromZeroToLeft(x);
+                            test = 0;
+                        } 
+                    }
+                    else if (trigo.getDirection() == Direction.SE) {
+                        if ((int) y <= paddingTop) {
+                            trigo.fromZeroToRight(x);
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.WN) {
+                        if ((int) y <= paddingTop) {
+                            trigo.fromZeroToRight(x);
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.EN) {
+                        if ((int) y <= paddingTop) {
+                            trigo.fromZeroToLeft(x);
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.WS) {
+                        if ((int) y >= height - paddingBottom) {
+                            checkChariotPos();
+                            trigo.fromTopToRight(x);
+                            test = 0;
+                        }
+                    }
+                    else if (trigo.getDirection() == Direction.ES) {
+                        if ((int) y >= height - paddingBottom) {
+                            checkChariotPos();
+                            trigo.fromTopToLeft(x);
+                            test = 0;
+                        }
+                    }
                     break;
             }
-            gestionTimer();
-            return true;
         }
 
+        /**
+         * gestion du timer pour bouger la balle
+         */
         protected void gestionTimer() {
             if (timer != null) {
                 if (timer.isRunning()) timer.stop();
             }
-            
-            // trigo.fromMiddleToLeft(300, false); // test ok
-            // trigo.fromMiddleToRight(300, true); // test ok
-            // trigo.fromTopToLeft(); // test ok
-            // trigo.fromTopToRight(); // test ok
-            // trigo.fromZeroToLeft(); // test ok
-            
-            
             timer = new Timer(delay, new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     movePoint();
-                    
-
-                    if (trigo.getRebond() == Rebond.Y) {
-                        if (trigo.getDirection() == Direction.WS | 
-                            trigo.getDirection() == Direction.WN |
-                            trigo.getDirection() == Direction.SE |
-                            trigo.getDirection() == Direction.NE) {
-                            if ((int) x >= width - 40) {
-                                timer.stop();
-                                System.out.println("stopped1-1");
-                            }
-                        }
-
-                        if (trigo.getDirection() == Direction.ES | 
-                            trigo.getDirection() == Direction.EN |
-                            trigo.getDirection() == Direction.SW |
-                            trigo.getDirection() == Direction.NW) {
-                            if ((int) x <= 40) {
-                                timer.stop();
-                                System.out.println("stopped1-2");
-                            }
-                        }
-                    } else {
-                        if (trigo.getDirection() == Direction.WN | 
-                            trigo.getDirection() == Direction.EN |
-                            trigo.getDirection() == Direction.SW |
-                            trigo.getDirection() == Direction.SE) {
-                            System.out.println("direction vers nord se pas de rebond");
-                            if ((int) y <= 40) {
-                                timer.stop();
-                                System.out.println("stopped2-1");
-                            }
-                        } else {
-                            System.out.println("direction vers sud pas de rebond");
-                            if ((int) y >= height - 40) {
-                                timer.stop();
-                                System.out.println("stopped2-2");
-                            }
-                        }
-                    }
                     repaint();
                 }
-
             });
             timer.start();
         }
 
-
+        /**
+         * bouger la balle
+         * x est incrémenté ou décrémenté en fonction de la direction de la balle
+         */
         public void movePoint() {  
-            // System.out.println(trigo.getDirection());
-            // System.out.println(trigo.getRebond());
             if (x == 0) {
-
-                if (trigo.getDirection() == Direction.EN |
-                    trigo.getDirection() == Direction.ES) {
-                        x = width - 40;
-                } else if (trigo.getDirection() == Direction.WN |
-                    trigo.getDirection() == Direction.WS) {
-                        x = 0 + 40;
-                } else {
                     x = trigo.getDebutX();
-                }
-
-                // si middle
-                // x = width;
-                // x++;
             } else {
                 if (trigo.getDirection() == Direction.NE | 
                     trigo.getDirection() == Direction.SE |
@@ -269,8 +333,17 @@ public class Fenetre extends JFrame {
                 }
             }
             y = trigo.getCoef() * x + trigo.getB();
+            gestionDirections();  
+        }
 
-            // System.out.println(x + "  " + y);
+        /**
+         * vérifier que la balle, quand elle arrive en bas de l'écran, correspond au coordonnées du chariot
+         */
+        private void checkChariotPos() {
+            if (x < chariotX | x > chariotX + chariotWidth) {
+                System.out.println("ok");
+                timer.stop();
+            }
         }
     
         /**
@@ -280,7 +353,7 @@ public class Fenetre extends JFrame {
         @Override
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
-            // drawChariot(g);
+            drawChariot(g);
             drawLine(g);
         }
 
@@ -296,9 +369,10 @@ public class Fenetre extends JFrame {
         }
 
 
-
-
-
+        /**
+         * tracer la balle
+         * @param g graphics
+         */
         private void drawLine(Graphics g) {
             Graphics2D g2 = (Graphics2D) g;
             if (initial) {
@@ -309,14 +383,14 @@ public class Fenetre extends JFrame {
             g2.setColor(Color.RED);
             g2.setStroke(new BasicStroke(4));
             g2.draw(new Line2D.Double(x, y, x, y));
-    
         }
 
         /**
-         * @param e event
+         * bouger le chariot au click de la souris
+         * @param e event quand la souris reste cliquée
          */
         public void mouseDragged(MouseEvent e) {
-            double finFenetre = width - chariotWidth - 25;
+            double finFenetre = width - chariotWidth - paddingRight;
             double newX = e.getX();
             if (newX >= finFenetre ) {
                 chariotX = finFenetre;
@@ -326,7 +400,6 @@ public class Fenetre extends JFrame {
             } else {
                 chariotX = newX;
             }
-            // drawLine(g);
             this.repaint();
 
         }

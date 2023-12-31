@@ -14,7 +14,7 @@ public class TrigoTest {
     Trigo t;
 
     public TrigoTest() {
-        t = new Trigo(500, 600);
+        t = new Trigo(500, 600, 80);
     }
 
     @Test 

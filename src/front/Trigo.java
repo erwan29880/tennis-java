@@ -37,11 +37,6 @@ public class Trigo {
     protected double b;
 
     /**
-     * coordonnées de fin de droite, soit [0, y quand x = 0] ou [width, y quand x = width]
-     */
-    protected double[] coord;
-
-    /**
      * le cosinus de l'angle ; l'angle doit être converti en radians
      */
     protected double cosAngle; 
@@ -62,16 +57,22 @@ public class Trigo {
     protected Rebond rebond;
 
     /**
+     * le padding de la fenêtre pour le calcul de b
+     */
+    private int paddingBottom;
+    
+
+    /**
      * constructeur
      * @param w la largeur de la fenêtre de jeu
      * @param h la hauteur de la fenêtre de jeu
      */
-    public Trigo(int w, int h) {
+    public Trigo(int w, int h, int padd) {
         this.width = w;
         this.height = h;
         this.direction = Direction.NE;
         this.rebond = Rebond.N;
-
+        this.paddingBottom = padd;
         this.initialValues();
     }
 
@@ -79,11 +80,10 @@ public class Trigo {
      * initialisation des variables dans une méthode séparée pour alléger le constructeur
      */
     protected void initialValues() {
-        this.angle = rand(10, 80);
+        this.angle = rand(70, 80);
         this.debutX = rand(0+10.0d, this.width - 10.0d);
         this.coef = 0.0d;
         this.b = 0.0d;
-        this.coord = new double[2];
         this.cosAngle = 0.0d;
     }
 
@@ -167,7 +167,8 @@ public class Trigo {
      * calculer les a et b en partant de l'axe des abscisse
      * a ascendant 
      */
-    protected void fromZeroToRight() {
+    protected void fromZeroToRight(double absc) {
+        debutX = absc;
         modifiyAngle();
         double hypo = width/checkDivZero(cosAngle);
         double coteOpp = Math.sqrt(Math.abs(Math.pow(hypo, 2) - Math.pow(width,2) ));        
@@ -185,7 +186,8 @@ public class Trigo {
      * calculer les a et b en partant de l'axe des abscisse
      * a descendant 
      */
-    protected void fromZeroToLeft(){
+    protected void fromZeroToLeft(double absc){
+        debutX = absc;
         modifiyAngle();
         coef = - Math.tan(Math.toRadians(angle));
         b = - (coef*debutX);       
@@ -194,30 +196,7 @@ public class Trigo {
         toY();
     }
 
-    /**
-     * calculer les a et b en partant de l'axe des abscisse + height, retour vers l'axe des abscisses
-     * a descendant 
-     */
-    protected void fromTopToRight () {
-        modifiyAngle();
-        // angle inversé !
-        double cosAng = Math.cos(Math.toRadians(90-angle));
-        // coefficient négatif
-        coef = -Math.tan(Math.toRadians(angle));
-        // calcul hypothénuse
-        double oz = height / checkDivZero(cosAng);
-        // calcul base
-        double xz = Math.sqrt(Math.abs(Math.pow(oz, 2) - Math.pow(height, 2)));
-        // calcul absisse totale
-        double az = xz + debutX; 
-        // thalès
-        b = az * height / checkDivZero(xz); 
-    
-        direction = Direction.SE;
-        toY();
-    }
-
-
+ 
     /**
      * calculer a et b pour le cas ou la balle n'arrive pas à zéro
      * @param fin l'ordonnée à laquelle la trajectoire de l'axe des ordonnées
@@ -257,31 +236,41 @@ public class Trigo {
      * calculer les a et b en partant de l'axe des abscisse + height, retour vers l'axe des abscisses
      * a ascendant 
      */
-    protected void fromTopToLeft () { 
+    protected void fromTopToLeft (double absc) { 
+        debutX = absc;
         modifiyAngle();
         coef = Math.tan(Math.toRadians(angle));
-        // hypothénuse
-        double bo = debutX / checkDivZero(cosAngle);
-        // base
-        double co = Math.sqrt(Math.abs( Math.pow(bo, 2) - Math.pow(debutX, 2)));
-        // thalès
-        b = height - co;
-        
+        double bo = debutX / checkDivZero(cosAngle);  // hypothénuse
+        double co = Math.sqrt(Math.abs( Math.pow(bo, 2) - Math.pow(debutX, 2))); // base
+        b = height - co; // thales
+        b = b - paddingBottom;
+
         direction = Direction.SW;
         toY();
     }
 
-
     /**
-     * calcul de x et y en fonction de x = 0 ou x = width
-     * @param left en fonction de la direction de la balle
+     * calculer les a et b en partant de l'axe des abscisse + height, retour vers l'axe des abscisses
+     * a descendant 
      */
-    protected void calculateCoord(boolean left) {
-        if (rebond == Rebond.Y) {
-            coord = left == true ? new double[]{0, b} : new double[]{width, coef * width + b};
-        } else {
-            coord = new double[]{-99, -99};
-        }
+    protected void fromTopToRight (double absc) {
+        debutX = absc;
+        modifiyAngle();
+        // angle inversé !
+        double cosAng = Math.cos(Math.toRadians(90-angle));
+        // coefficient négatif
+        coef = -Math.tan(Math.toRadians(angle));
+        // calcul hypothénuse
+        double oz = height / checkDivZero(cosAng);
+        // calcul base
+        double xz = Math.sqrt(Math.abs(Math.pow(oz, 2) - Math.pow(height, 2)));
+        // calcul absisse totale
+        double az = xz + debutX; 
+        // thalès
+        b = az * height / checkDivZero(xz); 
+        b = b - paddingBottom;
+        direction = Direction.SE;
+        toY();
     }
 
 
@@ -303,36 +292,28 @@ public class Trigo {
     protected void toY() {
         switch(direction) {
             case NE:
-                rebond = calculateY(false) >=  height ? Rebond.N : Rebond.Y;
-                calculateCoord(true);
+                rebond = calculateY(false) >= height ? Rebond.N : Rebond.Y;
                 break;
             case NW:
                 rebond = calculateY(true) >= height ? Rebond.N : Rebond.Y;
-                calculateCoord(false);
                 break;
             case SE:
-                rebond = calculateY(true) <= 0 ? Rebond.N : Rebond.Y;
-                calculateCoord(true);
+                rebond = calculateY(false) <= 0 ? Rebond.N : Rebond.Y;
                 break;
             case SW:
                 rebond = calculateY(true) <= 0 ? Rebond.N : Rebond.Y;
-                calculateCoord(false);
                 break;
             case EN:
                 rebond = calculateY(true) <=  0 ? Rebond.N : Rebond.Y;
-                calculateCoord(true);
                 break;
             case ES:
                 rebond = calculateY(true) >= height ? Rebond.N : Rebond.Y;
-                calculateCoord(true);
                 break;
             case WN:
                 rebond = calculateY(false) <= 0 ? Rebond.N : Rebond.Y;
-                calculateCoord(false);
                 break;
             case WS:
                 rebond = calculateY(false) >= height ? Rebond.N : Rebond.Y;
-                calculateCoord(false);
                 break;
         }
     }
@@ -362,6 +343,10 @@ public class Trigo {
         return checkDivZero(nbTest);
     }
 
+    /**
+     * méthode de test
+     * @return une liste de booléens qui indiquent si les tests sont concluants
+     */
     public List<Boolean> testModifiyAngle() {
         List<Double> angles = Arrays.asList(11.0d, 50.0d, 79.0d);
         List<Double> anglesModifies = new ArrayList<Double>();
@@ -373,42 +358,60 @@ public class Trigo {
         return checks;
     }
 
+
+    /**
+     * méthode de test
+     * @return une liste de booléens en fonction du succès des tests
+     */
     public boolean[] testDirections() {
         double coeff = coef;
         double bb = b;
         boolean[] checks = new boolean[4];
-        fromZeroToRight();
+        fromZeroToRight(100);
         checks[0] = coef != coeff | b != bb;
-        fromTopToLeft();
+        fromTopToLeft(100);
         checks[1] = coef != coeff | b != bb;
-        fromTopToRight();
+        fromTopToRight(100);
         checks[2] = coef != coeff | b != bb;
-        fromTopToLeft();
+        fromTopToLeft(100);
         checks[3] = coef != coeff | b != bb;
         return checks;
     }
 
+    // getter 
     protected double getCoef() {
         return coef;
     }
 
+    /**
+     * getter b
+     * @return
+     */
     protected double getB() {
         return b;
     }
 
+    /**
+     * getter debutX
+     * @return
+     */
     protected double getDebutX() {
         return debutX;
     }
 
+    /**
+     * getter direction
+     * @return
+     */
     protected Direction getDirection() {
         return direction;
     }
 
+    /**
+     * getter rebond ou non
+     * @return
+     */
     protected Rebond getRebond() {
         return rebond;
-    }
-
-    protected double[] getCoord() {
-        return coord;
     }
 }
