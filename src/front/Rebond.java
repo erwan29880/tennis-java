@@ -1,5 +1,8 @@
 package front;
 
+/**
+ * pour savoir si il y aura un rebond sur les côtés
+ */
 public enum Rebond {
     Y("rebond"),
     N("pas de rebond");

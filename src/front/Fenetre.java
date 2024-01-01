@@ -11,6 +11,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.event.ActionEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -31,6 +33,16 @@ public class Fenetre extends JFrame {
      */
     private final int height = 600;
 
+    /**
+     * hauteur du panel des boutons
+     */
+    private final int controlsHeight = 70;
+
+    /**
+     * classe de gestion du chariot et de la balle
+     */
+    private Chariot chariot;
+
     
     /**
      * constructeur
@@ -46,8 +58,57 @@ public class Fenetre extends JFrame {
 
         // espace de jeu
         Container c = getContentPane();
-        Chariot chariot = new Chariot();
+
+        chariot = new Chariot(height - controlsHeight);
+        Controls controls = new Controls();
+        c.add(controls);
         c.add(chariot);
+    }
+
+
+
+    public class Controls extends JPanel {
+        
+        /**
+         * constructeur
+         */
+        public Controls() {
+            setLayout(null);
+            setBounds(0, 0, width, controlsHeight);
+            // setBackground(Color.black);
+
+            buttons();
+        }
+
+        protected void buttons() {
+            int middle = width/2;
+            int buttonWidth = 70;
+            int buttonHeight = 30;
+            int posY = 14;
+            int ecart = 40;
+            JButton start = new JButton("start");
+            JButton stop = new JButton("stop");
+            start.setBounds(middle - ecart - buttonWidth, posY, buttonWidth, buttonHeight);
+            stop.setBounds(middle + ecart, posY, buttonWidth, buttonHeight);
+            add(start);
+            add(stop);
+            
+            start.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("start clicked"); 
+                    chariot.gestionTimer();  
+                }
+            });
+
+            stop.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("stop clicked");   
+                    chariot.stopTimer();
+                }
+            });
+        }
     }
 
 
@@ -56,6 +117,9 @@ public class Fenetre extends JFrame {
      * classe chariot
      */
     public class Chariot extends JPanel implements MouseMotionListener{
+
+        protected int heigh;
+
 
         /**
          * timer pour pouvoir retracer les éléments
@@ -132,39 +196,46 @@ public class Fenetre extends JFrame {
          */
         private double chariotY;
             
-        /**
-         * classe de calcul des variables des fonctions affines
-         */
-        Trigo trigo;
+        
 
         /**
          * récupérer la direction de la balle
          */
         Direction direction;
 
+        /**
+         * classe de calcul des variables des fonctions affines
+         */
+        Trigo trigo;
 
         /**
          * constructeur
+         * @param heigh hauteur de la fenêtre de jeu
          */
-        public Chariot() {
+        public Chariot(int heigh) {
+
+            this.heigh = heigh;
+
             // coordonnées du chariot
             chariotX = width/2.0d - chariotWidth/2.0d - 10;
-            chariotY  = height - 95;
+            chariotY  = heigh - 95;
 
             // instanciation d'une direction pour pas d'erreur
             direction = Direction.SW; 
 
             // gestion de la fenêtre
             setLayout(null);
-            setBounds(0, 0, width-20, height-20);
+            setBounds(0, controlsHeight, width, height - controlsHeight);
+            // setBackground(Color.GRAY);
+            setBorder(BorderFactory.createLineBorder(Color.black));
 
             // gestion chariot quand la souris est cliquée
             addMouseMotionListener(this);
 
             // gestion de la balle
-            trigo = new Trigo(width, height, paddingBottom);
+            trigo = new Trigo(width, heigh, paddingBottom);
             trigo.fromZeroToLeft(trigo.rand(0+10.0d, width - 10.0d));
-            gestionTimer();
+            // gestionTimer(); // pour test, sinon la gestion timer est controlée par des boutons
             
         }
 
@@ -243,14 +314,14 @@ public class Fenetre extends JFrame {
                     break;
                 case N:
                     if (trigo.getDirection() == Direction.NW) {
-                        if ((int) y >= height - paddingBottom) {
+                        if ((int) y >= this.heigh - paddingBottom) {
                             checkChariotPos();
                             trigo.fromTopToLeft(x);
                             test = 0;
                         } 
                     }
                     else if (trigo.getDirection() == Direction.NE) {
-                        if ((int) y >= height - paddingBottom) {
+                        if ((int) y >= this.heigh - paddingBottom) {
                             checkChariotPos();
                             trigo.fromTopToRight(x);
                             test = 0;
@@ -281,14 +352,14 @@ public class Fenetre extends JFrame {
                         }
                     }
                     else if (trigo.getDirection() == Direction.WS) {
-                        if ((int) y >= height - paddingBottom) {
+                        if ((int) y >= this.heigh - paddingBottom) {
                             checkChariotPos();
                             trigo.fromTopToRight(x);
                             test = 0;
                         }
                     }
                     else if (trigo.getDirection() == Direction.ES) {
-                        if ((int) y >= height - paddingBottom) {
+                        if ((int) y >= this.heigh - paddingBottom) {
                             checkChariotPos();
                             trigo.fromTopToLeft(x);
                             test = 0;
@@ -385,6 +456,7 @@ public class Fenetre extends JFrame {
             g2.draw(new Line2D.Double(x, y, x, y));
         }
 
+
         /**
          * bouger le chariot au click de la souris
          * @param e event quand la souris reste cliquée
@@ -410,5 +482,8 @@ public class Fenetre extends JFrame {
          */
         public void mouseMoved(MouseEvent e) {}
 
+        public void stopTimer() {
+            timer.stop();
+        }
     }
 }

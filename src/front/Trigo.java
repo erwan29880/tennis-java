@@ -60,7 +60,9 @@ public class Trigo {
      * le padding de la fenêtre pour le calcul de b
      */
     private int paddingBottom;
-    
+
+    private double hypo;
+
 
     /**
      * constructeur
@@ -85,6 +87,7 @@ public class Trigo {
         this.coef = 0.0d;
         this.b = 0.0d;
         this.cosAngle = 0.0d;
+        this.hypo = this.height;
     }
 
     /**
@@ -413,5 +416,9 @@ public class Trigo {
      */
     protected Rebond getRebond() {
         return rebond;
+    }
+
+    protected int getAngle() {
+        return angle;
     }
 }

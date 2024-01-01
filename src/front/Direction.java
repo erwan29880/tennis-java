@@ -1,5 +1,8 @@
 package front;
 
+/**
+ * énumération des directions possibles de la balle
+ */
 public enum Direction {
     NE("NE"),
     SE("SE"),
