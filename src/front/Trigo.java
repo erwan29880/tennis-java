@@ -4,72 +4,79 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class Trigo {
+/**
+ * La classe Trigo calcule la trajectoire de la balle en fonction de sa position. 
+ * La trajectoire de la balle est définie selon un angle de départ, et un coefficient directeur.
+ * Cet angle est modifié à chaque rebond. 
+ * Le coefficient directeur est modifié en fonction de la pente ascendante ou descendante de la balle.  
+ * Le "b" de y = ax + b est recalculé pour chaque trajectoire.
+ * @author erwan tanguy
+ */
+class Trigo {
     
     /**
      * largeur de l'espace de jeu
      */
-    protected int width;
+    private int width;
     
     /**
      * hauteur de l'espace de jeu
      */
-    protected int height;
+    private int height;
 
     /**
      * absisse de départ
      */
-    protected double debutX;
+    private double debutX;
 
     /**
      * angle de départ
      */
-    protected int angle;
+    private int angle;
 
     /**
      * coefficient directeur de la droite
      */
-    protected double coef;
+    private double coef;
 
     /**
      * le b de y = ax + b
      */
-    protected double b;
+    private double b;
 
     /**
      * le cosinus de l'angle ; l'angle doit être converti en radians
      */
-    protected double cosAngle; 
+    private double cosAngle; 
 
     /**
      * addition d'une constante en cas de division par zéro
      */
-    protected final double epsilon = 1e-5d;  
+    private final double epsilon = 1e-5d;  
     
     /**
      * la direction de la balle
      */
-    protected Direction direction;
+    private Direction direction;
     
     /**
      * si il y a un rebond ou non
      */
-    protected Rebond rebond;
+    private Rebond rebond;
 
     /**
      * le padding de la fenêtre pour le calcul de b
      */
     private int paddingBottom;
 
-    private double hypo;
-
 
     /**
      * constructeur
      * @param w la largeur de la fenêtre de jeu
      * @param h la hauteur de la fenêtre de jeu
+     * @param padd le padding bottom de la fenêtre
      */
-    public Trigo(int w, int h, int padd) {
+    Trigo(int w, int h, int padd) {
         this.width = w;
         this.height = h;
         this.direction = Direction.NE;
@@ -81,13 +88,12 @@ public class Trigo {
     /**
      * initialisation des variables dans une méthode séparée pour alléger le constructeur
      */
-    protected void initialValues() {
+    private void initialValues() {
         this.angle = rand(70, 80);
         this.debutX = rand(0+10.0d, this.width - 10.0d);
         this.coef = 0.0d;
         this.b = 0.0d;
         this.cosAngle = 0.0d;
-        this.hypo = this.height;
     }
 
     /**
@@ -101,7 +107,7 @@ public class Trigo {
     }
 
     /**
-     * trouver un nombvre pseudo-aléatoire
+     * trouver un nombre pseudo-aléatoire
      * @param deb le minimum du nombre aléatoire
      * @param w le maximum du nombre aléatoire
      * @return un nombre pseudo aléatoire en tre deb et w
@@ -116,7 +122,7 @@ public class Trigo {
      * @param denominateur le dénominateur de la division
      * @return le dénominateur non égal à zéro
      */
-    protected double checkDivZero(double denominateur){
+    private double checkDivZero(double denominateur){
       return denominateur == 0 ? denominateur + epsilon : denominateur;
     }
 
@@ -125,7 +131,7 @@ public class Trigo {
      * modifier légèrement l'angle pour changer la direction de la droite 
      * modification de +8 ou -8 degrés
      */
-    protected void modifiyAngle() {
+    private void modifiyAngle() {
         // modification aléatoire de la valeur de l'angle
         int alea = rand(0, 8);
         // pour additioner ou soustraire
@@ -148,8 +154,9 @@ public class Trigo {
      * modifier légèrement l'angle pour changer la direction de la droite 
      * pour tests
      * modification de +8 ou -8 degrés
+     * @param ang l'angle à modifier
      */
-    protected double modifiyAngle(double ang) {
+    private double modifiyAngle(double ang) {
         // modification aléatoire de la valeur de l'angle
         int alea = rand(0, 8);
         // pour additioner ou soustraire
@@ -169,6 +176,7 @@ public class Trigo {
     /**
      * calculer les a et b en partant de l'axe des abscisse
      * a ascendant 
+     * @param absc l'absisse pour calculer b
      */
     protected void fromZeroToRight(double absc) {
         debutX = absc;
@@ -188,6 +196,7 @@ public class Trigo {
     /**
      * calculer les a et b en partant de l'axe des abscisse
      * a descendant 
+     * @param absc l'absisse pour calculer b
      */
     protected void fromZeroToLeft(double absc){
         debutX = absc;
@@ -203,7 +212,7 @@ public class Trigo {
     /**
      * calculer a et b pour le cas ou la balle n'arrive pas à zéro
      * @param fin l'ordonnée à laquelle la trajectoire de l'axe des ordonnées
-     * @boolean asc change le coefficient directeur pour que la trajectoire soit ascendante ou descendante
+     * @param asc change le coefficient directeur pour que la trajectoire soit ascendante ou descendante
      */
     protected void fromMiddleToRight (double fin, boolean asc) {
         modifiyAngle();
@@ -220,6 +229,7 @@ public class Trigo {
     /**
      * calculer a et b pour le cas ou la balle n'arrive pas à zéro
      * @param fin l'ordonnée à laquelle la trajectoire de l'axe des ordonnées
+     * @param asc coefficient directeur ascendant ou descendant
      */
     protected void fromMiddleToLeft (double fin, boolean asc) {
         modifiyAngle();
@@ -238,6 +248,7 @@ public class Trigo {
     /**
      * calculer les a et b en partant de l'axe des abscisse + height, retour vers l'axe des abscisses
      * a ascendant 
+     * @param absc l'absisse pour le calcul de b
      */
     protected void fromTopToLeft (double absc) { 
         debutX = absc;
@@ -255,6 +266,7 @@ public class Trigo {
     /**
      * calculer les a et b en partant de l'axe des abscisse + height, retour vers l'axe des abscisses
      * a descendant 
+     * @param absc l'absisse pour le calcul de b
      */
     protected void fromTopToRight (double absc) {
         debutX = absc;
@@ -290,9 +302,8 @@ public class Trigo {
     /**
      * calcul des coordonnées de y si x = 0 ou x = width selon la direction
      * calcul si il y a un rebond sur l'axe des absisses ou non
-     * @param direction la direction à partir de l'origine
      */
-    protected void toY() {
+    private void toY() {
         switch(direction) {
             case NE:
                 rebond = calculateY(false) >= height ? Rebond.N : Rebond.Y;
@@ -381,14 +392,17 @@ public class Trigo {
         return checks;
     }
 
-    // getter 
+    /**
+     * getter pour le coefficient directeur
+     * @return le coefficient directeur
+     */
     protected double getCoef() {
         return coef;
     }
 
     /**
      * getter b
-     * @return
+     * @return le b de ax + b
      */
     protected double getB() {
         return b;
@@ -396,7 +410,7 @@ public class Trigo {
 
     /**
      * getter debutX
-     * @return
+     * @return l'absisse de départ
      */
     protected double getDebutX() {
         return debutX;
@@ -404,7 +418,7 @@ public class Trigo {
 
     /**
      * getter direction
-     * @return
+     * @return la direction de la balle
      */
     protected Direction getDirection() {
         return direction;
@@ -412,12 +426,16 @@ public class Trigo {
 
     /**
      * getter rebond ou non
-     * @return
+     * @return Y ou N
      */
     protected Rebond getRebond() {
         return rebond;
     }
 
+    /**
+     * getter pour l'angle
+     * @return l'angle
+     */
     protected int getAngle() {
         return angle;
     }

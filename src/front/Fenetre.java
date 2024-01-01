@@ -2,6 +2,7 @@ package front;
 
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Toolkit;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionListener;
@@ -18,8 +19,10 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.awt.BasicStroke;
 
+
 /**
- * classe de la fenêtre
+ * classe de la fenêtre principale composée de deux Panels : 
+ * Controls pour les boutons, Chariot pour le jeu
  */
 public class Fenetre extends JFrame {
     
@@ -56,9 +59,19 @@ public class Fenetre extends JFrame {
         setLayout(null);
         setBounds(0,0, 600, 600);
 
+        // icone et titre
+        setTitle("catch the ball");
+        String path = new StringBuilder()
+                    .append(System.getProperty("user.dir"))
+                    .append(System.getProperty("file.separator"))
+                    .append("ball.jpg")
+                    .toString();
+        setIconImage(Toolkit.getDefaultToolkit().getImage(path));
+
         // espace de jeu
         Container c = getContentPane();
 
+        // panels
         chariot = new Chariot(height - controlsHeight);
         Controls controls = new Controls();
         c.add(controls);
@@ -66,21 +79,27 @@ public class Fenetre extends JFrame {
     }
 
 
-
-    public class Controls extends JPanel {
+    /**
+     * classe des boutons stop et start
+     */
+    private class Controls extends JPanel {
         
         /**
          * constructeur
          */
-        public Controls() {
+        private Controls() {
+            // confirguration
             setLayout(null);
             setBounds(0, 0, width, controlsHeight);
-            // setBackground(Color.black);
 
+            //afficher les boutons
             buttons();
         }
 
-        protected void buttons() {
+        /**
+         * créer les boutons et y ajouter des évènements
+         */
+        private void buttons() {
             int middle = width/2;
             int buttonWidth = 70;
             int buttonHeight = 30;
@@ -114,17 +133,19 @@ public class Fenetre extends JFrame {
 
 
     /**
-     * classe chariot
+     * classe chariot : gestion de la balle et du chariot
      */
-    public class Chariot extends JPanel implements MouseMotionListener{
+    private class Chariot extends JPanel implements MouseMotionListener{
 
-        protected int heigh;
-
+        /**
+         * hauteur de la fenêtre de jeu
+         */
+        private int heigh;
 
         /**
          * timer pour pouvoir retracer les éléments
          */
-        protected Timer timer;
+        private Timer timer;
 
         /**
          * la rapidité du timer
@@ -139,12 +160,12 @@ public class Fenetre extends JFrame {
         /**
          * abscisse de la balle 
          */
-        protected double x = 0.0d;
+        private double x = 0.0d;
 
         /**
          * ordonnée de la balle
          */
-        protected double y = 0.0d;
+        private double y = 0.0d;
 
         /**
          * variable qui reprend debutX de la classe Trigo
@@ -196,7 +217,6 @@ public class Fenetre extends JFrame {
          */
         private double chariotY;
             
-        
 
         /**
          * récupérer la direction de la balle
@@ -212,7 +232,7 @@ public class Fenetre extends JFrame {
          * constructeur
          * @param heigh hauteur de la fenêtre de jeu
          */
-        public Chariot(int heigh) {
+        private Chariot(int heigh) {
 
             this.heigh = heigh;
 
@@ -245,7 +265,7 @@ public class Fenetre extends JFrame {
          * 
          * la fonction change la direction de la balle, arrête le jeu si la balle n'est pas renvoyée par le chariot
          */
-        protected void gestionDirections () {
+        private void gestionDirections () {
             // pour affichage console
             if (test == 0) {
                 System.out.println(trigo.getRebond() + "  " + trigo.getDirection() + " " + x + "  " + y);
@@ -390,7 +410,7 @@ public class Fenetre extends JFrame {
          * bouger la balle
          * x est incrémenté ou décrémenté en fonction de la direction de la balle
          */
-        public void movePoint() {  
+        private void movePoint() {  
             if (x == 0) {
                     x = trigo.getDebutX();
             } else {
@@ -482,6 +502,9 @@ public class Fenetre extends JFrame {
          */
         public void mouseMoved(MouseEvent e) {}
 
+        /**
+         * méthode utilisée par la classe Controls
+         */
         public void stopTimer() {
             timer.stop();
         }
